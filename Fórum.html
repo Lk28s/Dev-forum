@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevForum BR - Comunidade de Programadores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dev-blue': '#2b5f88',
+                        'dev-orange': '#ff7b24',
+                        'dev-green': '#2e7d32',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .code-header {
+            background: rgba(0,0,0,0.4);
+            color: white;
+            padding: 6px 12px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            font-family: monospace;
+            display: flex;
+            justify-content: space-between;
+        }
+        .upvote-btn:hover {
+            color: var(--dev-orange);
+        }
+        .bookmark-btn:hover {
+            color: var(--dev-green);
+        }
+        .thread-card {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .thread-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left-color: var(--dev-blue);
+        }
+        .solution-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--dev-green);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <img src="https://placehold.co/40x40/2b5f88/FFFFFF?text=DF" alt="Logo DevForum com gradiente azul e letras DF brancas" class="rounded">
+                    <h1 class="text-xl font-bold text-dev-blue">DevForum BR</h1>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#" class="text-dev-blue font-medium">Início</a>
+                    <a href="#" class="text-gray-600 hover:text-dev-blue">Tags</a>
+                    <a href="#" class="text-gray-600 hover:text-dev-blue">Usuários</a>
+                    <a href="#" class="text-gray-600 hover:text-dev-blue">Sobre</a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="bg-dev-blue text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Entrar
+                    </button>
+                    <button class="hidden md:block bg-dev-orange text-white px-4 py-2 rounded-md hover:bg-orange-700">
+                        Nova Pergunta
+                    </button>
+                    <button class="text-gray-500 hover:text-dev-blue">
+                        <i class="fas fa-search fa-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-dev-blue to-blue-800 text-white py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">Comunidade de Desenvolvedores Brasileira</h1>
+            <p class="text-lg md:text-xl mb-8 max-w-3xl mx-auto">
+                Compartilhe conhecimento, resolva problemas e conecte-se com outros desenvolvedores
+            </p>
+            <div class="flex justify-center space-x-4">
+                <button class="bg-white text-dev-blue px-6 py-3 rounded-md font-medium hover:bg-gray-100">
+                    Faça uma pergunta
+                </button>
+                <button class="bg-transparent border-2 border-white px-6 py-3 rounded-md font-medium hover:bg-white hover:text-dev-blue">
+                    Explorar tópicos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Sidebar -->
+            <aside class="md:w-1/4 space-y-6">
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="font-semibold mb-3">Estatísticas</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tópicos</span>
+                            <span id="totalThreads" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Respostas</span>
+                            <span id="totalComments" class="font-medium">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Usuários</span>
+                            <span class="font-medium">1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="font-semibold mb-3">Tags Populares</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tag bg-blue-100 text-blue-800">javascript</span>
+                        <span class="tag bg-green-100 text-green-800">python</span>
+                        <span class="tag bg-purple-100 text-purple-800">lua</span>
+                        <span class="tag bg-red-100 text-red-800">java</span>
+                        <span class="tag bg-yellow-100 text-yellow-800">php</span>
+                        <span class="tag bg-indigo-100 text-indigo-800">node.js</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-4 hidden md:block">
+                    <img src="https://placehold.co/300x250/2b5f88/FFFFFF?text=Patrocinador" alt="Anúncio quadrado promovendo curso de programação" class="w-full rounded">
+                </div>
+            </aside>
+
+            <!-- Threads List -->
+            <div class="md:w-3/4 space-y-4">
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">Tópicos Recentes</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-dev-blue text-white rounded-md">Novos</button>
+                            <button class="px-3 py-1 text-sm hover:bg-gray-100 rounded-md">Populares</button>
+                        </div>
+                    </div>
+                    
+                    <div id="threadList" class="space-y-3">
+                        <!-- Threads will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-lg font-semibold mb-4">Tópicos Resolvidos</h3>
+                    <div id="solvedThreads" class="space-y-3">
+                        <!-- Solved threads will appear here -->
+                        <div class="text-center text-gray-500">Nenhum tópico resolvido ainda</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals (same as before but enhanced) -->
+    <div id="newThreadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <!-- Modal content similar to previous but with tags input -->
+    </div>
+
+    <div id="threadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4">
+        <!-- Enhanced modal with voting and markdown support -->
+    </div>
+
+    <script>
+        // Enhanced localStorage system with more data structure
+        const forumData = {
+            threads: JSON.parse(localStorage.getItem('forumThreads')) || [],
+            comments: JSON.parse(localStorage.getItem('forumComments')) || {},
+            votes: JSON.parse(localStorage.getItem('forumVotes')) || {},
+            solutions: JSON.parse(localStorage.getItem('forumSolutions')) || {},
+            bookmarks: JSON.parse(localStorage.getItem('forumBookmarks')) || []
+        };
+
+        // New forum features inspired by professional dev forums
+        const newFeatures = {
+            // 1. Voting system (like Stack Overflow)
+            handleVote: (threadId, voteType) => {
+                if (!forumData.votes[threadId]) {
+                    forumData.votes[threadId] = { upvotes: 0, downvotes: 0 };
+                }
+                
+                forumData.votes[threadId][voteType]++;
+                localStorage.setItem('forumVotes', JSON.stringify(forumData.votes));
+                updateThreadScore(threadId);
+            },
+            
+            // 2. Mark solution (like Stack Overflow accepted answer)
+            markAsSolution: (threadId, commentId) => {
+                forumData.solutions[threadId] = commentId;
+                localStorage.setItem('forumSolutions', JSON.stringify(forumData.solutions));
+                
+                // Add badge to thread in list
+                const solvedBadge = document.createElement('span');
+                solvedBadge.className = 'solution-badge';
+                solvedBadge.innerHTML = '<i class="fas fa-check"></i>';
+                
+                // Find thread element and add badge
+                document.querySelectorAll(`[data-thread-id="${threadId}"] .thread-status`).forEach(el => {
+                    el.appendChild(solvedBadge.cloneNode(true));
+                    el.classList.add('border-l-dev-green');
+                });
+            },
+            
+            // 3. Bookmark posts (like Dev.to)
+            toggleBookmark: (threadId) => {
+                const index = forumData.bookmarks.indexOf(threadId);
+                if (index === -1) {
+                    forumData.bookmarks.push(threadId);
+                } else {
+                    forumData.bookmarks.splice(index, 1);
+                }
+                localStorage.setItem('forumBookmarks', JSON.stringify(forumData.bookmarks));
+                
+                // Update bookmark button appearance
+                document.querySelectorAll(`[data-thread-id="${threadId}"] .bookmark-btn`).forEach(btn => {
+                    btn.classList.toggle('text-dev-green');
+                });
+            },
+            
+            // 4. Tag system (like most dev forums)
+            extractTagsFromText: (text) => {
+                const tagRegex = /#(\w+)/g;
+                const matches = text.match(tagRegex);
+                if (matches) {
+                    return matches.map(tag => tag.substring(1)).slice(0, 5); // Max 5 tags
+                }
+                return [];
+            },
+            
+            // 5. Markdown support (like GitHub/GitLab)
+            renderMarkdown: (text) => {
+                return marked.parse(text);
+            }
+        };
+
+        // Enhanced thread rendering with voting, bookmarking, etc.
+        function renderEnhancedThreads() {
+            // Uses new features
+        }
+
+        // Initialize with sample data if empty (for demo purposes)
+        if (forumData.threads.length === 0) {
+            const sampleThreads = [
+                {
+                    id: '1',
+                    title: 'Como otimizar scripts Lua para jogos?',
+                    content: 'Estou desenvolvendo um jogo e meu script Lua está lento. Alguma dica de otimização?\n\n
