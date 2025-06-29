@@ -11,6 +11,9 @@
     <style>
         .code-block {
             position: relative;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+            overflow: hidden;
         }
         .lang-tag {
             position: absolute;
@@ -22,15 +25,24 @@
             font-size: 0.75rem;
             border-bottom-left-radius: 0.25rem;
         }
-        .message:hover .message-actions {
-            opacity: 1;
-        }
         .message-actions {
             transition: opacity 0.2s ease;
             opacity: 0;
         }
-        .modal {
-            transition: opacity 0.3s ease;
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+        #newThreadModal, #threadModal {
+            transition: opacity 0.2s ease;
+        }
+        pre {
+            margin: 0;
+            padding: 0;
+        }
+        pre code {
+            display: block;
+            padding: 1rem !important;
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -120,12 +132,14 @@
             </div>
             
             <!-- Thread List -->
-            <div id="threadList" class="divide-y divide-gray-200"></div>
+            <div id="threadList" class="divide-y divide-gray-200">
+                <!-- Threads will be loaded here -->
+            </div>
         </div>
     </main>
 
     <!-- New Thread Modal -->
-    <div id="newThreadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 modal">
+    <div id="newThreadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
             <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
                 <h2 class="text-xl font-semibold">Criar Nova Thread</h2>
@@ -160,7 +174,7 @@
     </div>
 
     <!-- Thread View Modal -->
-    <div id="threadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4 modal">
+    <div id="threadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 overflow-y-auto p-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 bg-white">
                 <h2 id="modalThreadTitle" class="text-xl font-semibold"></h2>
@@ -169,11 +183,15 @@
                 </button>
             </div>
             <div class="p-6">
-                <div id="modalThreadContent" class="mb-8"></div>
+                <div id="threadContent" class="mb-8">
+                    <!-- Thread content will be loaded here -->
+                </div>
                 
                 <div class="border-t border-gray-200 pt-6">
                     <h3 class="text-lg font-semibold mb-4">Respostas</h3>
-                    <div id="commentsContainer" class="space-y-4"></div>
+                    <div id="commentsContainer" class="space-y-4">
+                        <!-- Comments will be loaded here -->
+                    </div>
                     
                     <div class="mt-8">
                         <h4 class="text-md font-medium mb-3">Adicionar Resposta</h4>
@@ -188,36 +206,31 @@
     </div>
 
     <script>
-        // Inicializar Highlight.js
-        hljs.highlightAll();
-        
-        // DOM Elements
-        const newThreadBtn = document.getElementById('newThreadBtn');
-        const newThreadModal = document.getElementById('newThreadModal');
-        const closeThreadModal = document.getElementById('closeThreadModal');
-        const cancelThreadBtn = document.getElementById('cancelThreadBtn');
-        const saveThreadBtn = document.getElementById('saveThreadBtn');
-        const threadTitle = document.getElementById('threadTitle');
-        const threadCategory = document.getElementById('threadCategory');
-        const threadContent = document.getElementById('threadContent');
-        const threadList = document.getElementById('threadList');
-        const threadModal = document.getElementById('threadModal');
-        const closeModal = document.getElementById('closeModal');
-        const modalThreadTitle = document.getElementById('modalThreadTitle');
-        const modalThreadContent = document.getElementById('modalThreadContent');
-        const commentsContainer = document.getElementById('commentsContainer');
-        const newComment = document.getElementById('newComment');
-        const postCommentBtn = document.getElementById('postCommentBtn');
-        
-        // Sample data - in a real app this would come from a database
-        let threads = JSON.parse(localStorage.getItem('forumThreads')) || [];
-        let comments = JSON.parse(localStorage.getItem('forumComments')) || {};
-        
-        // Initialize with sample data if empty
-        if (threads.length === 0) {
-            threads = [
-                {
-                    id: '1',
-                    title: 'Como otimizar scripts Lua?',
-                    category: 'lua',
-                    content: 'Estou tendo problemas com performance nos meus scripts Lua. Alguém tem dicas de otimização?\n\n
+        // Initialize forum data structure
+        const forum = {
+            threads: JSON.parse(localStorage.getItem('forumThreads')) || [],
+            comments: JSON.parse(localStorage.getItem('forumComments')) || {},
+            activeThread: null,
+            
+            init: function() {
+                // Add sample data if none exists
+                if (this.threads.length === 0) {
+                    this.addSampleData();
+                }
+                
+                // Initialize event listeners
+                this.initEventListeners();
+                
+                // Render initial threads
+                this.renderThreads();
+                
+                // Initialize highlight.js
+                hljs.highlightAll();
+            },
+            
+            addSampleData: function() {
+                const sampleThreads = [
+                    {
+                        id: 'thread1',
+                        title: 'Como otimizar scripts Lua?',
+                        content: 'Estou tendo problemas com performance nos meus scripts Lua. Alguém tem dicas de otimização?\n\n
